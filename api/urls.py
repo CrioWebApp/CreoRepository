@@ -4,7 +4,7 @@ from api.views import DataValidation
 
 urlpatterns = [
     path('dataValidation', DataValidation.as_view(), name='Action'),
-    re_path(r'^auth/', include('djoser.urls.authtoken')),
+    re_path(r'^apiAuth/', include('djoser.urls.authtoken')),
 ]
 
 # urlpatterns = format_suffix_patterns(urlpatterns)

@@ -11,6 +11,14 @@ from api.serializers import DataRequestSerializer, VerificationVSerializer
 logger = logging.getLogger(__name__)
 
 class DataValidation(APIView):
+    def get_client_ip(self, request_meta):
+        logger.info('Start IP validation')
+        request_ip=request_meta[
+            'HTTP_X_REAL_IP' if 'HTTP_X_REAL_IP' in request_meta else 'HTTP_X_CLIENT_IP'
+        ]
+        logger.info(f'Request IP - {request_ip}')
+        return ClientV.objects.get(ip=request_ip).ip
+
     def post(self, request):
         logger.setLevel(logging.INFO)
         ch = logging.StreamHandler()
@@ -21,22 +29,16 @@ class DataValidation(APIView):
         ch.setFormatter(formater)
         logger.addHandler(ch)
         
-        logger.info('Start IP validation')
         try:
-            client_IP=request.META['HTTP_X_CLIENT_IP']
+            client_IP = self.get_client_ip(request.META)
         except KeyError:
             logger.exception('Meta key error')
             return Response('IP can not be recieved',
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        logger.info(f'Client IP - {client_IP}')
-        try:
-            ClientV.objects.get(ip=client_IP)
         except ObjectDoesNotExist:
             logger.exception('IP is not set in the DB')
             return Response(status=status.HTTP_403_FORBIDDEN)
-        logger.info('IP validation completed')
-        
+
         serializer = DataRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

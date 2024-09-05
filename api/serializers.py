@@ -13,12 +13,12 @@ class ParametersSerializer(serializers.ModelSerializer):
             'persons_identity_card2',
             'application_date'
         ]
-        extra_kwargs = {'id': {'read_only': False, 'allow_null': True},
-                        'phone_number': {'required': True},
-                        'email': {'required': True},
-                        'persons_identity_card1': {'required': True},
-                        'persons_identity_card2': {'required': True},
-                        'application_date': {'required': True}}
+        extra_kwargs = {'id': {'read_only': False, 'allow_null': True, 'default': None},
+                        'phone_number': {'default': None},
+                        'email': {'default': None},
+                        'persons_identity_card1': {'default': None},
+                        'persons_identity_card2': {'default': None},
+                        'application_date': {'default': None}}
 
 
 class DataRequestSerializer(serializers.Serializer):
