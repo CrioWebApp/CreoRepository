@@ -55,6 +55,11 @@ class DataValidation(APIView):
 
         sql_request = 'EXEC dbo.spap_req_verif %s,%s,%s,%s,%s,%s,%s,%s'
 
-        with connection.cursor() as cursor:
-            cursor.execute(sql_request, params)
-            return(Response(cursor.fetchall()))
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(sql_request, params)
+                return(Response(cursor.fetchall()))
+        except Exception as e:
+            logger.exception(e)
+            return Response('SP error',
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
