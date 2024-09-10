@@ -29,6 +29,7 @@ class DataValidation(APIView):
         ch.setFormatter(formater)
         logger.addHandler(ch)
         
+        logger.info(f'Data validation has started')
         try:
             client_IP = self.get_client_ip(request.META)
         except KeyError:
