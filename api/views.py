@@ -40,6 +40,7 @@ class DataValidation(APIView):
             logger.exception('IP is not set in the DB')
             return Response(status=status.HTTP_403_FORBIDDEN)
 
+        logger.info(f'Getting serialized data')
         serializer = DataRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -55,6 +56,7 @@ class DataValidation(APIView):
                   serializer.validated_data['Type'])
 
         sql_request = 'EXEC dbo.spap_req_verif %s,%s,%s,%s,%s,%s,%s,%s'
+        logger.info(f'sql_request - {sql_request}')
 
         try:
             with connection.cursor() as cursor:
