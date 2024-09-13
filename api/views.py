@@ -12,16 +12,9 @@ logger = logging.getLogger(__name__)
 class DataValidation(APIView):
     def get_request_ip(self, request_meta):
         logger.info('Start IP validation')
-        try:
-            request_ip=request_meta[
-                'HTTP_X_REAL_IP' if 'HTTP_X_REAL_IP' in request_meta else 'HTTP_X_CLIENT_IP'
-            ]
-        except KeyError:
-            logger.exception('Meta key error')
-            return Response('IP can not be recieved',
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        return request_ip
+        return request_meta[
+            'HTTP_X_REAL_IP' if 'HTTP_X_REAL_IP' in request_meta else 'HTTP_X_CLIENT_IP'
+        ]
 
     def dictfetchall(self, cursor):
         """
@@ -66,8 +59,13 @@ class DataValidation(APIView):
         
         logger.info(f'Data validation has been started')
 
-        request_ip = self.get_request_ip(request.META)
-        logger.info(f'Request IP - {request_ip}')
+        try:
+            request_ip = self.get_request_ip(request.META)
+            logger.info(f'Request IP - {request_ip}')
+        except KeyError:
+            logger.exception('Meta key error')
+            return Response('IP can not be recieved',
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         serializer = DataRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
