@@ -27,9 +27,9 @@ class DataValidation(APIView):
 
     def call_procedure(self, cursor, sql_request, params):
         """
-        Return response with requested fields.
-        Return response with exeption 500 if the procedure
-        returns status greater than 0.
+        Returns response with requested fields.
+        Returns response with http status code taken from server
+        if status code greater than 0.
         """
         cursor.execute(sql_request, params)
         while True:
@@ -37,9 +37,12 @@ class DataValidation(APIView):
             if 'return_status' in cursor.description[0]:
                 return_status = cursor.fetchval()
                 logger.debug(f'return_status - {return_status}')
+                status_code = {
+                    403: status.HTTP_403_FORBIDDEN,
+                    500: status.HTTP_500_INTERNAL_SERVER_ERROR,
+                }
                 if return_status:
-                    return Response(return_status,
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    return Response(status=status_code[return_status])
             else:
                 result_fields = self.dictfetchall(cursor)
             if not cursor.nextset():
@@ -84,8 +87,7 @@ class DataValidation(APIView):
         sql_request = '''declare @ret_status int;
                          exec @ret_status=spap_req_verif %s,%s,%s,%s,%s,%s,%s,%s;
                          select 'return_status' = @ret_status;'''
-        
-        logger.info(f'sql_request --- {sql_request}')
+        logger.debug(f'sql_request --- {sql_request}')
 
         try:
             with connection.cursor() as cursor:
