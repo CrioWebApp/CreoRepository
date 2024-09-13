@@ -29,9 +29,7 @@ class DataValidation(APIView):
         Assume the column names are unique.
         """
         columns = [col[0] for col in cursor.description]
-        print(columns)
         dictfetchall = [dict(zip(columns, row)) for row in cursor.fetchall()]
-        print(dictfetchall)
         return dictfetchall
 
     def call_procedure(self, cursor, sql_request, params):
@@ -42,10 +40,10 @@ class DataValidation(APIView):
         """
         cursor.execute(sql_request, params)
         while True:
-            print(cursor.description)
+            logger.debug(cursor.description)
             if 'return_status' in cursor.description[0]:
                 return_status = cursor.fetchval()
-                print(return_status)
+                logger.debug(f'return_status - {return_status}')
                 if return_status:
                     return Response(return_status,
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -53,7 +51,7 @@ class DataValidation(APIView):
                 result_fields = self.dictfetchall(cursor)
             if not cursor.nextset():
                 break
-            print(cursor.description)
+            logger.debug(f'result_fields - {result_fields}')
         return Response(result_fields)
 
     def post(self, request):
