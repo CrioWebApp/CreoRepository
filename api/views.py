@@ -2,42 +2,72 @@ import logging
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection
-from api.models import VerificationV, ClientV
 from rest_framework.response import Response
 from rest_framework.views import APIView, status
-from api.serializers import DataRequestSerializer, VerificationVSerializer
+from api.serializers import DataRequestSerializer
 
 
 logger = logging.getLogger(__name__)
 
 class DataValidation(APIView):
-    def get_client_ip(self, request_meta):
+    def get_request_ip(self, request_meta):
         logger.info('Start IP validation')
-        request_ip=request_meta[
-            'HTTP_X_REAL_IP' if 'HTTP_X_REAL_IP' in request_meta else 'HTTP_X_CLIENT_IP'
-        ]
-        logger.info(f'Request IP - {request_ip}')
-        return ClientV.objects.get(ip=request_ip).ip
-
-    def post(self, request):
-        logger.setLevel(logging.INFO)
-        ch = logging.StreamHandler()
-        ch.setLevel(logging.DEBUG)
-        fmtstr = '%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s'
-        fmtdate = '%H:%M:%S'
-        formater = logging.Formatter(fmtstr, fmtdate)
-        ch.setFormatter(formater)
-        logger.addHandler(ch)
-        
         try:
-            client_IP = self.get_client_ip(request.META)
+            request_ip=request_meta[
+                'HTTP_X_REAL_IP' if 'HTTP_X_REAL_IP' in request_meta else 'HTTP_X_CLIENT_IP'
+            ]
         except KeyError:
             logger.exception('Meta key error')
             return Response('IP can not be recieved',
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        except ObjectDoesNotExist:
-            logger.exception('IP is not set in the DB')
-            return Response(status=status.HTTP_403_FORBIDDEN)
+        
+        return request_ip
+
+    def dictfetchall(self, cursor):
+        """
+        Return all rows from a cursor as a dict.
+        Assume the column names are unique.
+        """
+        columns = [col[0] for col in cursor.description]
+        dictfetchall = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        return dictfetchall
+
+    def call_procedure(self, cursor, sql_request, params):
+        """
+        Return response with requested fields.
+        Return response with exeption 500 if the procedure
+        returns status greater than 0.
+        """
+        cursor.execute(sql_request, params)
+        while True:
+            logger.debug(cursor.description)
+            if 'return_status' in cursor.description[0]:
+                return_status = cursor.fetchval()
+                logger.debug(f'return_status - {return_status}')
+                if return_status:
+                    return Response(return_status,
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            else:
+                result_fields = self.dictfetchall(cursor)
+            if not cursor.nextset():
+                break
+            logger.debug(f'result_fields - {result_fields}')
+        return Response(result_fields)
+
+    def post(self, request):
+        logger.setLevel(logging.INFO)
+        conshandler = logging.StreamHandler()
+        conshandler.setLevel(logging.DEBUG)
+        fmtstr = '%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s'
+        fmtdate = '%H:%M:%S'
+        formater = logging.Formatter(fmtstr, fmtdate)
+        conshandler.setFormatter(formater)
+        logger.addHandler(conshandler)
+        
+        logger.info(f'Data validation has been started')
+
+        request_ip = self.get_request_ip(request.META)
+        logger.info(f'Request IP - {request_ip}')
 
         serializer = DataRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -50,16 +80,22 @@ class DataValidation(APIView):
                   parameters['persons_identity_card1'],
                   parameters['persons_identity_card2'],
                   parameters['application_date'],
-                  client_IP,
+                  request_ip,
                   serializer.validated_data['Type'])
 
-        sql_request = 'EXEC dbo.spap_req_verif %s,%s,%s,%s,%s,%s,%s,%s'
+        sql_request = '''declare @ret_status int;
+                         exec @ret_status=spap_req_verif %s,%s,%s,%s,%s,%s,%s,%s;
+                         select 'return_status' = @ret_status;'''
+        
+        logger.info(f'sql_request --- {sql_request}')
 
         try:
             with connection.cursor() as cursor:
-                cursor.execute(sql_request, params)
-                return(Response(cursor.fetchall()))
+                return self.call_procedure(cursor, sql_request, params)
         except Exception as e:
             logger.exception(e)
-            return Response('SP error',
+            return Response('Procedure_error',
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        finally:
+            connection.close()
+        
