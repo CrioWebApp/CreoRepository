@@ -113,6 +113,12 @@ REST_FRAMEWORK = {
     ],
 }
 
+DJOSER = {
+    'SERIALIZERS': {
+        'token': 'accounts.serializers.TokenSerializer',
+    },
+}
+
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
