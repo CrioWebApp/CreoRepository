@@ -22,8 +22,19 @@ class DataValidation(APIView):
         Assume the column names are unique.
         """
         columns = [col[0] for col in cursor.description]
-        dictfetchall = [dict(zip(columns, row)) for row in cursor.fetchall()]
-        return dictfetchall
+        fethed_data = cursor.fetchall()
+        if len(fethed_data) > 1:
+            return [dict(zip(columns, row)) for row in fethed_data]
+        return dict(zip(columns, fethed_data[0]))
+
+    def check_return_status(self, return_status):
+        logger.debug(f'return_status - {return_status}')
+        status_code = {
+            403: status.HTTP_403_FORBIDDEN,
+            500: status.HTTP_500_INTERNAL_SERVER_ERROR,
+        }
+        if return_status:
+            return Response(status=status_code[return_status])
 
     def call_procedure(self, cursor, sql_request, params):
         """
@@ -36,19 +47,13 @@ class DataValidation(APIView):
             logger.debug(cursor.description)
             if 'return_status' in cursor.description[0]:
                 return_status = cursor.fetchval()
-                logger.debug(f'return_status - {return_status}')
-                status_code = {
-                    403: status.HTTP_403_FORBIDDEN,
-                    500: status.HTTP_500_INTERNAL_SERVER_ERROR,
-                }
-                if return_status:
-                    return Response(status=status_code[return_status])
+                self.check_return_status(return_status)
             else:
                 result_fields = self.dictfetchall(cursor)
             if not cursor.nextset():
                 break
             logger.debug(f'result_fields - {result_fields}')
-        return Response(result_fields)
+        return result_fields
 
     def post(self, request):
         logger.setLevel(logging.INFO)
@@ -75,11 +80,11 @@ class DataValidation(APIView):
 
         parameters = serializer.validated_data['Parameters']
         
-        params = (parameters['id'],
-                  parameters['phone_number'],
-                  parameters['email'],
-                  parameters['persons_identity_card1'],
-                  parameters['persons_identity_card2'],
+        params = (parameters['application_id'],
+                  parameters['PhoneNumber'],
+                  parameters['Email'],
+                  parameters['PersonIdentityCard1'],
+                  parameters['PersonIdentityCard2'],
                   parameters['application_date'],
                   request_ip,
                   serializer.validated_data['Type'])
@@ -91,7 +96,10 @@ class DataValidation(APIView):
 
         try:
             with connection.cursor() as cursor:
-                return self.call_procedure(cursor, sql_request, params)
+                proc_response = self.call_procedure(cursor, sql_request, params)
+                return Response({
+                    'results': proc_response,
+                })
         except Exception as e:
             logger.exception(e)
             return Response('Procedure_error',
