@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from djoser.conf import settings
+from djoser.serializers import TokenCreateSerializer
 
 
 class TokenSerializer(serializers.ModelSerializer):
@@ -8,3 +9,8 @@ class TokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = settings.TOKEN_MODEL
         fields = ("token",)
+
+
+class CustomTokenCreateSerializer(TokenCreateSerializer):
+    Password = serializers.CharField(required=False, style={"input_type": "password"}, source="password")
+    Username = serializers.EmailField(required=False, style={"input_type": "email"}, source="email")

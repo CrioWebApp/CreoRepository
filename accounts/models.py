@@ -32,8 +32,8 @@ class CustomUserManager(BaseUserManager):
 
 
 class CustomUser(AbstractBaseUser):
-    email = models.EmailField(max_length=254, unique=True)
-    password = models.CharField(max_length=128, null=True)
+    email = models.EmailField(max_length=254, unique=True, db_column='Username')
+    password = models.CharField(max_length=128, null=True, db_column='Password')
     first_name = models.CharField(max_length=255, null=True, blank=True)
     last_name = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

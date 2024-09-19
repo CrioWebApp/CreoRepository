@@ -73,6 +73,13 @@ WSGI_APPLICATION = 'web.wsgi.application'
 
 GROUP_MANAGEMENT = False
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     },
+# }
+
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
@@ -116,6 +123,7 @@ REST_FRAMEWORK = {
 DJOSER = {
     'SERIALIZERS': {
         'token': 'accounts.serializers.TokenSerializer',
+        'token_create': 'accounts.serializers.CustomTokenCreateSerializer',
     },
 }
 
