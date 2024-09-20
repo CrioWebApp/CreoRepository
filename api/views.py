@@ -27,33 +27,28 @@ class DataValidation(APIView):
             return [dict(zip(columns, row)) for row in fethed_data]
         return dict(zip(columns, fethed_data[0]))
 
-    def check_return_status(self, return_status):
-        logger.debug(f'return_status - {return_status}')
-        status_code = {
-            403: status.HTTP_403_FORBIDDEN,
-            500: status.HTTP_500_INTERNAL_SERVER_ERROR,
-        }
-        if return_status:
-            return Response(status=status_code[return_status])
-
-    def call_procedure(self, cursor, sql_request, params):
+    def call_procedure(self, cursor, params):
         """
-        Returns response with requested fields.
-        Returns response with http status code taken from server
-        if status code greater than 0.
+        Fetch requested fields and return status
         """
+        params_string = ','.join((['%s'] * len(params)))
+        sql_request = f'''declare @ret_status int;
+                          exec @ret_status=spap_req_verif {params_string};
+                          select 'return_status' = @ret_status;'''
+        logger.debug(f'sql_request --- {sql_request}')
+        result_fields = {}
         cursor.execute(sql_request, params)
         while True:
             logger.debug(cursor.description)
             if 'return_status' in cursor.description[0]:
                 return_status = cursor.fetchval()
-                self.check_return_status(return_status)
+                logger.debug(f'return_status - {result_fields}')
             else:
                 result_fields = self.dictfetchall(cursor)
+                logger.debug(f'result_fields - {result_fields}')
             if not cursor.nextset():
                 break
-            logger.debug(f'result_fields - {result_fields}')
-        return result_fields
+        return result_fields, return_status
 
     def post(self, request):
         logger.setLevel(logging.INFO)
@@ -89,21 +84,16 @@ class DataValidation(APIView):
                   request_ip,
                   serializer.validated_data['Type'])
 
-        sql_request = '''declare @ret_status int;
-                         exec @ret_status=spap_req_verif %s,%s,%s,%s,%s,%s,%s,%s;
-                         select 'return_status' = @ret_status;'''
-        logger.debug(f'sql_request --- {sql_request}')
-
         try:
             with connection.cursor() as cursor:
-                proc_response = self.call_procedure(cursor, sql_request, params)
-                return Response({
-                    'results': proc_response,
-                })
+                proc_response, return_status = self.call_procedure(cursor, params)
+                return Response({'results': proc_response},
+                                status=return_status if return_status \
+                                    else status.HTTP_200_OK)
         except Exception as e:
             logger.exception(e)
             return Response('Procedure_error',
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         finally:
             connection.close()
         
