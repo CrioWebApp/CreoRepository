@@ -19,7 +19,7 @@ class UserCreationForm(forms.ModelForm):
 
     class Meta:
         model = CustomUser
-        fields = ["email", "first_name", "last_name", "is_staff"]
+        fields = ["username", "email", "first_name", "last_name", "is_staff"]
 
     def clean_password2(self):
         # Check that the two password entries match
@@ -48,7 +48,7 @@ class UserChangeForm(forms.ModelForm):
 
     class Meta:
         model = CustomUser
-        fields = ["email", "password", "first_name", "last_name", "is_staff", "is_active"]
+        fields = ["username", "email", "password", "first_name", "last_name", "is_staff", "is_active"]
 
 
 class UserAdmin(BaseUserAdmin):
@@ -56,10 +56,10 @@ class UserAdmin(BaseUserAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
 
-    list_display = ["email", "first_name", "last_name", "is_staff", "is_active", "is_superuser"]
+    list_display = ["username", "email", "first_name", "last_name", "is_staff", "is_active", "is_superuser"]
     list_filter = ["is_staff", "is_active"]
     fieldsets = [
-        (None, {"fields": ["email", "password", "is_active"]}),
+        (None, {"fields": ["username", "email", "password", "is_active"]}),
         ("Personal info", {"fields": ["first_name", "last_name"]}),
         ("Permissions", {"fields": ["is_staff", "is_superuser"]}),
     ]
@@ -70,7 +70,7 @@ class UserAdmin(BaseUserAdmin):
             None,
             {
                 "classes": ["wide"],
-                "fields": ["email", "password1", "password2"],
+                "fields": ["username", "email", "password1", "password2"],
             },
         ),
     ]
