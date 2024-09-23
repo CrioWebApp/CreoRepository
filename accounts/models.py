@@ -32,8 +32,9 @@ class CustomUserManager(BaseUserManager):
 
 
 class CustomUser(AbstractBaseUser):
-    email = models.EmailField(max_length=254, unique=True, db_column='Username')
-    password = models.CharField(max_length=128, null=True, db_column='Password')
+    username = models.CharField(max_length=128, unique=True, db_column='Username')
+    email = models.EmailField(max_length=254, unique=True)
+    password = models.CharField(max_length=128, db_column='Password')
     first_name = models.CharField(max_length=255, null=True, blank=True)
     last_name = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -44,7 +45,7 @@ class CustomUser(AbstractBaseUser):
 
     objects = CustomUserManager()
 
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = 'username'
 
     def __str__(self):
         return self.email

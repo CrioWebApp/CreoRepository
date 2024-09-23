@@ -13,4 +13,4 @@ class TokenSerializer(serializers.ModelSerializer):
 
 class CustomTokenCreateSerializer(TokenCreateSerializer):
     Password = serializers.CharField(required=False, style={"input_type": "password"}, source="password")
-    Username = serializers.EmailField(required=False, style={"input_type": "email"}, source="email")
+    Username = serializers.CharField(required=False, style={"input_type": "username"}, source="username")
