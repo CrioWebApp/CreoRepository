@@ -82,7 +82,8 @@ class DataValidation(APIView):
                   parameters['PersonIdentityCard2'],
                   parameters['application_date'],
                   request_ip,
-                  serializer.validated_data['Type'])
+                  serializer.validated_data['Type'],
+                  parameters['mode'])
 
         try:
             with connection.cursor() as cursor:
