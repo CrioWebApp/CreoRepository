@@ -89,6 +89,22 @@ DATABASES = {
         'HOST': env.str('DEBTHOR_DB_HOST'),
         'PORT': env.str('DEBTHOR_DB_PORT'),
     },
+    'ezhik.database.windows.net': {
+        'ENGINE': 'mssql',
+        'NAME': env.str('DEBTHOR_DB_NAME'),
+        'USER': env.str('DEBTHOR_DB_USER'),
+        'PASSWORD': env.str('DEBTHOR_DB_PASSWORD'),
+        'HOST': env.str('EZHIK_DB_HOST', 'ezhik.database.windows.net'),
+        'PORT': env.str('DEBTHOR_DB_PORT'),
+    },
+    'ezhik-ph.database.windows.net': {
+        'ENGINE': 'mssql',
+        'NAME': env.str('DEBTHOR_DB_NAME'),
+        'USER': env.str('DEBTHOR_DB_USER'),
+        'PASSWORD': env.str('DEBTHOR_DB_PASSWORD'),
+        'HOST': env.str('EZHIK_PH_DB_HOST', 'ezhik-ph.database.windows.net'),
+        'PORT': env.str('DEBTHOR_DB_PORT'),
+    },
 }
 
 DATABASE_CONNECTION_POOLING = False

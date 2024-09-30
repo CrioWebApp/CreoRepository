@@ -31,6 +31,10 @@ class ParametersSerializer(serializers.Serializer):
         allow_null=True,
         default=None
     )
+    mode = serializers.IntegerField(
+        allow_null=True,
+        default=None
+    )
     # class Meta:
     #     model = VerificationV
     #     fields = [
