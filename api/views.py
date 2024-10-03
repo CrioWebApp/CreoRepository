@@ -58,9 +58,7 @@ class DataValidation(APIView):
             cursor.execute(sql_request, (request_ip,))
             db_name = cursor.fetchval()
             logger.info(f'db_name - {db_name}')
-            if not db_name:
-                raise PermissionError()
-        return db_name
+        return db_name if db_name else 'default'
 
     def post(self, request):
         logger.setLevel(logging.INFO)
