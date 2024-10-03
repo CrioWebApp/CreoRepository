@@ -59,6 +59,14 @@ class ParametersSerializer(serializers.Serializer):
 
 
 class DataRequestSerializer(serializers.Serializer):
-    MethodName = serializers.CharField(max_length=100)
+    MethodName = serializers.CharField(
+        max_length=100,
+        allow_null=True,
+        default=None,
+    )
     Parameters = ParametersSerializer()
-    Type = serializers.CharField(max_length=100)
+    Type = serializers.CharField(
+        max_length=100,
+        allow_null=True,
+        default=None,
+    )
