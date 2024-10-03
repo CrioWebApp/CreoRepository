@@ -17,6 +17,11 @@ class ParametersSerializer(serializers.Serializer):
         allow_null=True,
         default=None
     )
+    PersonIdentityCard = serializers.CharField(
+        max_length=200,
+        allow_null=True,
+        default=None
+    )
     PersonIdentityCard2 = serializers.CharField(
         max_length=200,
         allow_null=True,
@@ -54,11 +59,14 @@ class ParametersSerializer(serializers.Serializer):
 
 
 class DataRequestSerializer(serializers.Serializer):
+    MethodName = serializers.CharField(
+        max_length=100,
+        allow_null=True,
+        default=None,
+    )
     Parameters = ParametersSerializer()
-    Type = serializers.CharField(max_length=50)
-
-
-class VerificationVSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = VerificationV
-        fields = "__all__"
+    Type = serializers.CharField(
+        max_length=100,
+        allow_null=True,
+        default=None,
+    )

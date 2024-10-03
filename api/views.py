@@ -30,37 +30,24 @@ class DataValidation(APIView):
         """
         Fetch requested fields and return status
         """
-        with connections[db_name].cursor() as cursor:
-            params_string = ','.join((['%s'] * len(params)))
-            sql_request = f'''declare @ret_status int;
-                            exec @ret_status=spap_req_verif {params_string};
-                            select 'return_status' = @ret_status;'''
-            logger.debug(f'sql_request --- {sql_request}')
-            result_fields = {}
-            cursor.execute(sql_request, params)
-            while True:
-                logger.debug(cursor.description)
-                if 'return_status' in cursor.description[0]:
-                    return_status = cursor.fetchval()
-                    logger.debug(f'return_status - {return_status}')
-                else:
-                    result_fields = self.dictfetchall(cursor)
-                    logger.debug(f'result_fields - {result_fields}')
-                if not cursor.nextset():
-                    break
+        params_string = ','.join((['%s'] * len(params)))
+        sql_request = f'''declare @ret_status int;
+                          exec @ret_status=spap_req_verif {params_string};
+                          select 'return_status' = @ret_status;'''
+        logger.debug(f'sql_request --- {sql_request}')
+        result_fields = {}
+        cursor.execute(sql_request, params)
+        while True:
+            logger.debug(cursor.description)
+            if 'return_status' in cursor.description[0]:
+                return_status = cursor.fetchval()
+                logger.debug(f'return_status - {result_fields}')
+            else:
+                result_fields = self.dictfetchall(cursor)
+                logger.debug(f'result_fields - {result_fields}')
+            if not cursor.nextset():
+                break
         return result_fields, return_status
-
-    def fetch_db_name_by_ip(self, request_ip):
-        with connections['default'].cursor() as cursor:
-            sql_request = f'''select db from client_v
-                              where ip=%s'''
-            logger.debug(f'sql_request --- {sql_request}')
-            cursor.execute(sql_request, (request_ip,))
-            db_name = cursor.fetchval()
-            logger.info(f'db_name - {db_name}')
-            if not db_name:
-                raise PermissionError()
-        return db_name
 
     def post(self, request):
         logger.setLevel(logging.INFO)
@@ -91,31 +78,22 @@ class DataValidation(APIView):
                   parameters['PhoneNumber'],
                   parameters['Email'],
                   parameters['PersonIdentityCard1'],
+                  parameters['PersonIdentityCard'],
                   parameters['PersonIdentityCard2'],
                   parameters['application_date'],
                   request_ip,
-                  serializer.validated_data['Type'],
-                  parameters['mode'])
+                  serializer.validated_data['Type'])
 
-        api_response = {
-            'results': list(),
-            'errors': list(),
-        }
-        api_status = status.HTTP_500_INTERNAL_SERVER_ERROR
         try:
-            db_name = self.fetch_db_name_by_ip(request_ip)
-            api_response['results'], return_status = self.call_procedure(db_name, params)
-            api_status = return_status if return_status else status.HTTP_200_OK
-        except ConnectionDoesNotExist as error:
-            logger.exception(error)
-            api_response['errors'].append('DB access error')
-        except PermissionError as error:
-            logger.exception(error)
-            api_response['errors'].append('Wrong IP')
-            api_status = status.HTTP_403_FORBIDDEN
-        except Exception as error:
-            logger.exception(error)
-            api_response['errors'].append('Procedure_error')
+            with connection.cursor() as cursor:
+                proc_response, return_status = self.call_procedure(cursor, params)
+                return Response({'results': proc_response},
+                                status=return_status if return_status \
+                                    else status.HTTP_200_OK)
+        except Exception as e:
+            logger.exception(e)
+            return Response('Procedure_error',
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         finally:
             connections.close_all()
             return Response(api_response, status=api_status)
