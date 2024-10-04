@@ -163,3 +163,5 @@ STATIC_URL = f'https://{AZURE_CUSTOM_DOMAIN}/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+SQL_PROCEDURE = env.str('SQL_PROCEDURE', 'spap_req_verif')
