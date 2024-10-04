@@ -1,5 +1,6 @@
 import logging
 
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connections
 from django.utils.connection import ConnectionDoesNotExist
@@ -26,14 +27,14 @@ class DataValidation(APIView):
         fethed_data = cursor.fetchall()
         return [dict(zip(columns, row)) for row in fethed_data]
 
-    def call_procedure(self, db_name, params):
+    def call_procedure(self, proc_name, db_name, params):
         """
         Fetch requested fields and return status
         """
         with connections[db_name].cursor() as cursor:
             params_string = ','.join((['%s'] * len(params)))
             sql_request = f'''DECLARE @ret_status int;
-                              EXEC @ret_status=spap_req_verif {params_string};
+                              EXEC @ret_status={proc_name} {params_string};
                               SELECT 'return_status' = @ret_status;'''
             logger.debug(f'sql_request --- {sql_request % params}')
             result_fields = {}
@@ -72,13 +73,21 @@ class DataValidation(APIView):
         
         logger.info(f'Data validation has been started')
 
+        api_response = {
+            'results': list(),
+            'errors': list(),
+        }
+        api_status = status.HTTP_500_INTERNAL_SERVER_ERROR
+
         try:
             request_ip = self.get_request_ip(request.META)
             logger.info(f'Request IP - {request_ip}')
-        except KeyError:
-            logger.exception('Meta key error')
-            return Response('IP can not be recieved',
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            request_token = request.META['HTTP_AUTHORIZATION'].split()[-1]
+            logger.debug(f'Request token - {request_token}')
+        except KeyError as error:
+            logger.exception(error)
+            api_response['errors'].append('Meta key error')
+            return Response(api_response, status=api_status)
 
         serializer = DataRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -95,17 +104,16 @@ class DataValidation(APIView):
                   request_ip,
                   serializer.validated_data['Type'],
                   parameters['mode'],
-                  serializer.validated_data['MethodName'])
+                  serializer.validated_data['MethodName'],
+                  request_token)
 
-        api_response = {
-            'results': list(),
-            'errors': list(),
-        }
-        api_status = status.HTTP_500_INTERNAL_SERVER_ERROR
         try:
             db_name = self.fetch_db_name_by_ip(request_ip)
-            api_response['results'], return_status = self.call_procedure(db_name, params)
-            api_status = return_status if return_status else status.HTTP_200_OK
+            proc_response, proc_status = self.call_procedure(settings.SQL_PROCEDURE,
+                                                             db_name,
+                                                             params)
+            api_response['results'] = proc_response
+            api_status = proc_status if proc_status else status.HTTP_200_OK
         except ConnectionDoesNotExist as error:
             logger.exception(error)
             api_response['errors'].append('DB access error')
