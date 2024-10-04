@@ -32,14 +32,14 @@ class DataValidation(APIView):
         """
         with connections[db_name].cursor() as cursor:
             params_string = ','.join((['%s'] * len(params)))
-            sql_request = f'''declare @ret_status int;
-                            exec @ret_status=spap_req_verif {params_string};
-                            select 'return_status' = @ret_status;'''
-            logger.debug(f'sql_request --- {sql_request}')
+            sql_request = f'''DECLARE @ret_status int;
+                              EXEC @ret_status=spap_req_verif {params_string};
+                              SELECT 'return_status' = @ret_status;'''
+            logger.debug(f'sql_request --- {sql_request % params}')
             result_fields = {}
             cursor.execute(sql_request, params)
             while True:
-                logger.debug(cursor.description)
+                logger.debug(f'cursor_descr ---- {cursor.description}')
                 if 'return_status' in cursor.description[0]:
                     return_status = cursor.fetchval()
                     logger.debug(f'return_status - {return_status}')
@@ -58,9 +58,7 @@ class DataValidation(APIView):
             cursor.execute(sql_request, (request_ip,))
             db_name = cursor.fetchval()
             logger.info(f'db_name - {db_name}')
-            if not db_name:
-                raise PermissionError()
-        return db_name
+        return db_name if db_name else 'default'
 
     def post(self, request):
         logger.setLevel(logging.INFO)
@@ -91,11 +89,13 @@ class DataValidation(APIView):
                   parameters['PhoneNumber'],
                   parameters['Email'],
                   parameters['PersonIdentityCard1'],
+                  parameters['PersonIdentityCard'],
                   parameters['PersonIdentityCard2'],
                   parameters['application_date'],
                   request_ip,
                   serializer.validated_data['Type'],
-                  parameters['mode'])
+                  parameters['mode'],
+                  serializer.validated_data['MethodName'])
 
         api_response = {
             'results': list(),
