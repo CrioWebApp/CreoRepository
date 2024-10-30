@@ -12,6 +12,16 @@ class ParametersSerializer(serializers.Serializer):
         allow_null=True,
         default=None
     )
+    PhoneNumber1 = serializers.CharField(
+        max_length=200,
+        allow_null=True,
+        default=None
+    )
+    PhoneNumber2 = serializers.CharField(
+        max_length=200,
+        allow_null=True,
+        default=None
+    )
     PersonIdentityCard1 = serializers.CharField(
         max_length=200,
         allow_null=True,
@@ -23,6 +33,21 @@ class ParametersSerializer(serializers.Serializer):
         default=None
     )
     PersonIdentityCard2 = serializers.CharField(
+        max_length=200,
+        allow_null=True,
+        default=None
+    )
+    Surname = serializers.CharField(
+        max_length=200,
+        allow_null=True,
+        default=None
+    )
+    FirstName = serializers.CharField(
+        max_length=200,
+        allow_null=True,
+        default=None
+    )
+    BornDate = serializers.CharField(
         max_length=200,
         allow_null=True,
         default=None
