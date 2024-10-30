@@ -62,15 +62,6 @@ class DataValidation(APIView):
         return db_name if db_name else 'default'
 
     def post(self, request):
-        logger.setLevel(logging.INFO)
-        conshandler = logging.StreamHandler()
-        conshandler.setLevel(logging.DEBUG)
-        fmtstr = '%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s'
-        fmtdate = '%H:%M:%S'
-        formater = logging.Formatter(fmtstr, fmtdate)
-        conshandler.setFormatter(formater)
-        logger.addHandler(conshandler)
-        
         logger.info(f'Data validation has been started')
 
         api_response = {
