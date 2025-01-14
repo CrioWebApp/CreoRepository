@@ -73,6 +73,13 @@ WSGI_APPLICATION = 'web.wsgi.application'
 
 GROUP_MANAGEMENT = False
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     },
+# }
+
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
@@ -80,6 +87,22 @@ DATABASES = {
         'USER': env.str('DEBTHOR_DB_USER'),
         'PASSWORD': env.str('DEBTHOR_DB_PASSWORD'),
         'HOST': env.str('DEBTHOR_DB_HOST'),
+        'PORT': env.str('DEBTHOR_DB_PORT'),
+    },
+    'ezhik.database.windows.net': {
+        'ENGINE': 'mssql',
+        'NAME': env.str('DEBTHOR_DB_NAME'),
+        'USER': env.str('DEBTHOR_DB_USER'),
+        'PASSWORD': env.str('DEBTHOR_DB_PASSWORD'),
+        'HOST': env.str('EZHIK_DB_HOST', 'ezhik.database.windows.net'),
+        'PORT': env.str('DEBTHOR_DB_PORT'),
+    },
+    'ezhik-ph.database.windows.net': {
+        'ENGINE': 'mssql',
+        'NAME': env.str('DEBTHOR_DB_NAME'),
+        'USER': env.str('DEBTHOR_DB_USER'),
+        'PASSWORD': env.str('DEBTHOR_DB_PASSWORD'),
+        'HOST': env.str('EZHIK_PH_DB_HOST', 'ezhik-ph.database.windows.net'),
         'PORT': env.str('DEBTHOR_DB_PORT'),
     },
 }
@@ -109,8 +132,15 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+        'accounts.authentication.BearerAuthentication',
     ],
+}
+
+DJOSER = {
+    'SERIALIZERS': {
+        'token': 'accounts.serializers.TokenSerializer',
+        'token_create': 'accounts.serializers.CustomTokenCreateSerializer',
+    },
 }
 
 LANGUAGE_CODE = 'en-us'
@@ -133,3 +163,42 @@ STATIC_URL = f'https://{AZURE_CUSTOM_DOMAIN}/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+SQL_PROCEDURE = env.str('SQL_PROCEDURE', 'spap_req_verif')
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+        "file": {
+            "class": "logging.FileHandler",
+            "formatter": "verbose",
+            "filename":  BASE_DIR / "debug.log"
+        }
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "api": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+        },
+    },
+}
