@@ -1,4 +1,5 @@
 import logging
+from http import HTTPStatus
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -51,15 +52,65 @@ class DataValidation(APIView):
                     break
         return result_fields, return_status
 
-    def fetch_db_name_by_ip(self, request_ip):
+    def fetch_db_params_by_ip(self, request_ip):
         with connections['default'].cursor() as cursor:
-            sql_request = f'''select db from client_v
-                              where ip=%s'''
+            sql_request = f'''select top 1 db,proc_name,profile_id
+                              from dbo.client_v
+                              where IP=%s'''
             logger.debug(f'sql_request --- {sql_request}')
             cursor.execute(sql_request, (request_ip,))
-            db_name = cursor.fetchval()
-            logger.info(f'db_name - {db_name}')
-        return db_name if db_name else 'default'
+            result = cursor.fetchall()
+            db_name, proc_name, profile_id = result[0]
+            logger.info(f'''db_name - {db_name},
+                            proc_name - {proc_name}, 
+                            profile_id - {profile_id}''')
+            db_name = db_name if db_name else 'default'
+            return db_name, proc_name, profile_id
+
+
+    def search_status(self, number):
+        for status in HTTPStatus:
+            description = 'No description'
+            if status.value == number:
+                description = f'{number} {status.description}'
+                break
+        return description
+
+
+    def get_status_and_message(self, is_entry, api_status):
+        if not api_status == 200:
+            return 'ERROR', self.search_status(api_status)
+        elif is_entry:
+            return 'HIT', 'data found'
+        return 'NO_HIT', 'data not found'
+
+
+    def get_api_response(self, profile_id, proc_response, api_status,
+                         conn_errors, method_name):
+        profile_id = 2
+        if profile_id == 1:
+            return {
+                'results': proc_response,
+                'errors': conn_errors,
+            }
+        elif profile_id == 2:
+            status, message = self.get_status_and_message(len(proc_response), api_status)
+            results = proc_response[0] if len(proc_response) == 1 else proc_response
+            if status == 'ERROR':
+                results = None
+            return {
+                "methodName": method_name,
+                "status": status,
+                "message": message,
+                "results": results,
+            }
+        else:
+            conn_errors.append('No profile_id')
+            return {
+                'results': [],
+                'errors': conn_errors,
+            }
+
 
     def post(self, request):
         logger.info(f'Data validation has been started')
@@ -84,6 +135,7 @@ class DataValidation(APIView):
         serializer.is_valid(raise_exception=True)
 
         parameters = serializer.validated_data['Parameters']
+        method_name = serializer.validated_data['MethodName']
         
         params = (parameters['application_id'],
                   parameters['PhoneNumber'],
@@ -100,31 +152,34 @@ class DataValidation(APIView):
                   request_ip,
                   serializer.validated_data['Type'],
                   parameters['mode'],
-                  serializer.validated_data['MethodName'],
+                  method_name,
                   request_token)
 
-        api_response = {
-            'results': list(),
-            'errors': list(),
-        }
+        conn_errors = list()
         api_status = status.HTTP_500_INTERNAL_SERVER_ERROR
+        profile_id = 0
+        proc_response = []
         try:
-            db_name = self.fetch_db_name_by_ip(request_ip)
-            proc_response, proc_status = self.call_procedure(settings.SQL_PROCEDURE,
+            db_name, proc_name, profile_id = self.fetch_db_params_by_ip(request_ip)
+            proc_response, proc_status = self.call_procedure(proc_name,
                                                              db_name,
                                                              params)
-            api_response['results'] = proc_response
             api_status = proc_status if proc_status else status.HTTP_200_OK
         except ConnectionDoesNotExist as error:
             logger.exception(error)
-            api_response['errors'].append('DB access error')
+            conn_errors.append('DB access error')
         except PermissionError as error:
             logger.exception(error)
-            api_response['errors'].append('Wrong IP')
+            conn_errors.append('Wrong IP')
             api_status = status.HTTP_403_FORBIDDEN
         except Exception as error:
             logger.exception(error)
-            api_response['errors'].append('Procedure_error')
+            conn_errors.append('Procedure_error')
         finally:
             connections.close_all()
+            api_response = self.get_api_response(profile_id,
+                                                 proc_response,
+                                                 api_status,
+                                                 conn_errors,
+                                                 method_name)
             return Response(api_response, status=api_status)
