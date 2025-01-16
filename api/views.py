@@ -87,7 +87,6 @@ class DataValidation(APIView):
 
     def get_api_response(self, profile_id, proc_response, api_status,
                          conn_errors, method_name):
-        profile_id = 2
         if profile_id == 1:
             return {
                 'results': proc_response,
