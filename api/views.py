@@ -130,6 +130,10 @@ class DataValidation(APIView):
             api_response['errors'].append('Meta key error')
             return Response(api_response, status=api_status)
 
+        request.data['Parameters'] = {
+            key.lower(): value\
+                for key, value in request.data['Parameters'].items()}
+
         serializer = DataRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -137,16 +141,16 @@ class DataValidation(APIView):
         method_name = serializer.validated_data['MethodName']
         
         params = (parameters['application_id'],
-                  parameters['PhoneNumber'],
-                  parameters['PhoneNumber1'],
-                  parameters['PhoneNumber2'],
-                  parameters['Email'],
-                  parameters['PersonIdentityCard1'],
-                  parameters['PersonIdentityCard'],
-                  parameters['PersonIdentityCard2'],
-                  parameters['Surname'],
-                  parameters['FirstName'],
-                  parameters['BornDate'],
+                  parameters['phonenumber'],
+                  parameters['phonenumber1'],
+                  parameters['phonenumber2'],
+                  parameters['email'],
+                  parameters['personidentitycard1'],
+                  parameters['personidentitycard'],
+                  parameters['personidentitycard2'],
+                  parameters['surname'],
+                  parameters['firstname'],
+                  parameters['borndate'],
                   parameters['application_date'],
                   request_ip,
                   serializer.validated_data['Type'],
