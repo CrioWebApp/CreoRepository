@@ -3,36 +3,36 @@ from rest_framework import serializers
 
 
 class ParametersSerializer(serializers.Serializer):
-    Email = serializers.EmailField(
+    email = serializers.EmailField(
         allow_null=True,
         default=None
     )
-    PhoneNumber = serializers.CharField(
+    phonenumber = serializers.CharField(
         max_length=200,
         allow_null=True,
         default=None
     )
-    PhoneNumber1 = serializers.CharField(
+    phonenumber1 = serializers.CharField(
         max_length=200,
         allow_null=True,
         default=None
     )
-    PhoneNumber2 = serializers.CharField(
+    phonenumber2 = serializers.CharField(
         max_length=200,
         allow_null=True,
         default=None
     )
-    PersonIdentityCard1 = serializers.CharField(
+    personidentitycard1 = serializers.CharField(
         max_length=200,
         allow_null=True,
         default=None
     )
-    PersonIdentityCard = serializers.CharField(
+    personidentitycard = serializers.CharField(
         max_length=200,
         allow_null=True,
         default=None
     )
-    PersonIdentityCard2 = serializers.CharField(
+    personidentitycard2 = serializers.CharField(
         max_length=200,
         allow_null=True,
         default=None
@@ -42,12 +42,12 @@ class ParametersSerializer(serializers.Serializer):
         allow_null=True,
         default=None
     )
-    FirstName = serializers.CharField(
+    firstname = serializers.CharField(
         max_length=200,
         allow_null=True,
         default=None
     )
-    BornDate = serializers.CharField(
+    borndate = serializers.CharField(
         max_length=200,
         allow_null=True,
         default=None
