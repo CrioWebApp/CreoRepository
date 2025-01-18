@@ -37,7 +37,7 @@ class ParametersSerializer(serializers.Serializer):
         allow_null=True,
         default=None
     )
-    Surname = serializers.CharField(
+    surname = serializers.CharField(
         max_length=200,
         allow_null=True,
         default=None
