@@ -158,6 +158,8 @@ class DataValidation(APIView):
                   method_name,
                   request_token)
 
+        logger.debug(f'params - {params}')
+
         conn_errors = list()
         api_status = status.HTTP_500_INTERNAL_SERVER_ERROR
         profile_id = 0
