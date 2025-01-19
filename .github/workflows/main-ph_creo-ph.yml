@@ -66,4 +66,4 @@ jobs:
         with:
           app-name: 'creo-ph'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_8918C4C03C724623BC7A694DE9F1C788 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_B703DE654A1340B180334042D87D9DB3 }}
