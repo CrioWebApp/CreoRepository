@@ -84,14 +84,15 @@ class ParametersSerializer(serializers.Serializer):
 
 
 class DataRequestSerializer(serializers.Serializer):
-    MethodName = serializers.CharField(
+    methodname = serializers.CharField(
         max_length=100,
         allow_null=True,
         default=None,
     )
-    Parameters = ParametersSerializer()
+    parameters = ParametersSerializer()
     Type = serializers.CharField(
         max_length=100,
         allow_null=True,
         default=None,
+        source='type',
     )
