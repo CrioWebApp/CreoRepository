@@ -67,7 +67,6 @@ class DataValidation(APIView):
             db_name = db_name if db_name else 'default'
             return db_name, proc_name, profile_id
 
-
     def search_status(self, number):
         for status in HTTPStatus:
             description = 'No description'
@@ -76,14 +75,12 @@ class DataValidation(APIView):
                 break
         return description
 
-
     def get_status_and_message(self, is_entry, api_status):
         if not api_status == 200:
             return 'ERROR', self.search_status(api_status)
         elif is_entry:
             return 'HIT', 'data found'
         return 'NO_HIT', 'data not found'
-
 
     def get_api_response(self, profile_id, proc_response, api_status,
                          conn_errors, method_name):
@@ -110,6 +107,12 @@ class DataValidation(APIView):
                 'errors': conn_errors,
             }
 
+    def make_low_letters_keys(self, request_data):
+        lower_request_data = {key.lower(): value\
+            for key, value in request_data.items()}
+        lower_request_data['parameters'] = {key.lower(): value\
+            for key, value in lower_request_data['parameters'].items()}
+        return lower_request_data
 
     def post(self, request):
         logger.info(f'Data validation has been started')
@@ -130,15 +133,15 @@ class DataValidation(APIView):
             api_response['errors'].append('Meta key error')
             return Response(api_response, status=api_status)
 
-        request.data['Parameters'] = {
-            key.lower(): value\
-                for key, value in request.data['Parameters'].items()}
+        request_data = self.make_low_letters_keys(request.data)
 
-        serializer = DataRequestSerializer(data=request.data)
+        serializer = DataRequestSerializer(data=request_data)
         serializer.is_valid(raise_exception=True)
 
-        parameters = serializer.validated_data['Parameters']
-        method_name = serializer.validated_data['MethodName']
+        print(serializer.validated_data)
+
+        parameters = serializer.validated_data['parameters']
+        method_name = serializer.validated_data['methodname']
         
         params = (parameters['application_id'],
                   parameters['phonenumber'],
@@ -153,7 +156,7 @@ class DataValidation(APIView):
                   parameters['borndate'],
                   parameters['application_date'],
                   request_ip,
-                  serializer.validated_data['Type'],
+                  serializer.validated_data['type'],
                   parameters['mode'],
                   method_name,
                   request_token)
