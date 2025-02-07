@@ -92,6 +92,8 @@ class DataValidation(APIView):
         elif profile_id == 2:
             status, message = self.get_status_and_message(len(proc_response), api_status)
             results = proc_response[0] if len(proc_response) == 1 else proc_response
+            if not results:
+                results = {}
             if status == 'ERROR':
                 results = None
             return {
@@ -137,8 +139,6 @@ class DataValidation(APIView):
 
         serializer = DataRequestSerializer(data=request_data)
         serializer.is_valid(raise_exception=True)
-
-        print(serializer.validated_data)
 
         parameters = serializer.validated_data['parameters']
         method_name = serializer.validated_data['methodname']
