@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'djoser',
+    'drf_ip_restrictions',
 ]
 
 MIDDLEWARE = [
@@ -130,6 +131,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
+        'drf_ip_restrictions.permissions.AllowedIpList',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'accounts.authentication.BearerAuthentication',
@@ -141,6 +143,9 @@ DJOSER = {
         'token': 'accounts.serializers.TokenSerializer',
         'token_create': 'accounts.serializers.CustomTokenCreateSerializer',
     },
+    'PERMISSIONS': {
+        'token_create': ['drf_ip_restrictions.permissions.AllowedIpList'],
+    }
 }
 
 LANGUAGE_CODE = 'en-us'
@@ -201,4 +206,8 @@ LOGGING = {
             "level": "DEBUG",
         },
     },
+}
+
+DRF_IP_RESTRICTION_SETTINGS = {
+    "ALLOWED_IP_LIST": env.list('ALLOWED_IP_LIST', [])
 }
