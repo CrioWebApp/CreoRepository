@@ -92,7 +92,7 @@ class DataValidation(APIView):
         elif profile_id == 2:
             status, message = self.get_status_and_message(len(proc_response), api_status)
             results = proc_response[0] if len(proc_response) == 1 else proc_response
-            if not results and method_name != 'GetDataByPersonEmailAndPhoneForPersons':
+            if not results and method_name.lower() != 'getdatabypersonemailandphoneforpersons':
                 results = {}
             if status == 'ERROR':
                 results = None
