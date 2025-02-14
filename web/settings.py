@@ -211,3 +211,5 @@ LOGGING = {
 DRF_IP_RESTRICTION_SETTINGS = {
     "ALLOWED_IP_LIST": env.list('ALLOWED_IP_LIST', [])
 }
+
+MULTIRESULT_METHODS = env.list('MULTIRESULT_METHODS', ['getdatabypersonemailandphoneforpersons'])

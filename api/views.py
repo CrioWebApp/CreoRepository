@@ -38,7 +38,7 @@ class DataValidation(APIView):
                               EXEC @ret_status={proc_name} {params_string};
                               SELECT 'return_status' = @ret_status;'''
             logger.debug(f'sql_request --- {sql_request % params}')
-            result_fields = {}
+            result_fields = []
             cursor.execute(sql_request, params)
             while True:
                 logger.debug(f'cursor_descr ---- {cursor.description}')
@@ -75,13 +75,6 @@ class DataValidation(APIView):
                 break
         return description
 
-    def get_status_and_message(self, is_entry, api_status):
-        if not api_status == 200:
-            return 'ERROR', self.search_status(api_status)
-        elif is_entry:
-            return 'HIT', 'data found'
-        return 'NO_HIT', 'data not found'
-
     def get_api_response(self, profile_id, proc_response, api_status,
                          conn_errors, method_name):
         if profile_id == 1:
@@ -90,17 +83,27 @@ class DataValidation(APIView):
                 'errors': conn_errors,
             }
         elif profile_id == 2:
-            status, message = self.get_status_and_message(len(proc_response), api_status)
-            results = proc_response[0] if len(proc_response) == 1 else proc_response
-            if not results and method_name.lower() != 'getdatabypersonemailandphoneforpersons':
-                results = {}
-            if status == 'ERROR':
-                results = None
+            if not api_status == 200:
+                return {
+                    'methodName': method_name,
+                    'status': 'ERROR',
+                    'message': self.search_status(api_status),
+                    'results': None,
+                }
+            multiresult_methods = getattr(settings, "MULTIRESULT_METHODS", [])
+            is_multiresult = method_name.lower() in multiresult_methods
+            if not len(proc_response):
+                return {
+                    'methodName': method_name,
+                    'status': 'NO_HIT',
+                    'message': 'data not found',
+                    'results': [] if is_multiresult else {},
+                }
             return {
-                "methodName": method_name,
-                "status": status,
-                "message": message,
-                "results": results,
+                'methodName': method_name,
+                'status': 'HIT',
+                'message': 'data found',
+                'results': proc_response if is_multiresult else proc_response[0],
             }
         else:
             conn_errors.append('No profile_id')
