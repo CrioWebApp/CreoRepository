@@ -91,6 +91,7 @@ class DataValidation(APIView):
                     'results': None,
                 }
             multiresult_methods = getattr(settings, "MULTIRESULT_METHODS", [])
+            multiresult_methods = list(map(lambda x: x.lower(), multiresult_methods))
             is_multiresult = method_name.lower() in multiresult_methods
             if not len(proc_response):
                 return {
@@ -104,6 +105,11 @@ class DataValidation(APIView):
                 'status': 'HIT',
                 'message': 'data found',
                 'results': proc_response if is_multiresult else proc_response[0],
+            }
+        elif profile_id == 3:
+            return {
+                'methodName': method_name,
+                'results': proc_response,
             }
         else:
             conn_errors.append('No profile_id')
