@@ -109,7 +109,7 @@ class DataValidation(APIView):
         elif profile_id == 3:
             return {
                 'methodName': method_name,
-                'results': proc_response[0],
+                'results': proc_response[0] if len(proc_response) else {},
             }
         else:
             conn_errors.append('No profile_id')
