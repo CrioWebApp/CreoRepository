@@ -107,10 +107,13 @@ class DataValidation(APIView):
                 'results': proc_response if is_multiresult else proc_response[0],
             }
         elif profile_id == 3:
+            if not len(proc_response):
+                return 'Nothing has been found'
             return {
                 'methodName': method_name,
-                'results': proc_response[0] if len(proc_response) else {},
+                'results': proc_response[0],
             }
+            
         else:
             conn_errors.append('No profile_id')
             return {
