@@ -3,7 +3,8 @@ from rest_framework import serializers
 
 
 class ParametersSerializer(serializers.Serializer):
-    email = serializers.EmailField(
+    email = serializers.CharField(
+        max_length=200,
         allow_null=True,
         default=None
     )
